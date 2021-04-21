@@ -78,6 +78,8 @@ void Error_Handler(void);
 #define CTRL_ONE_GPIO_Port GPIOB
 #define CTRL_TWO_Pin GPIO_PIN_2
 #define CTRL_TWO_GPIO_Port GPIOB
+#define CTRL_EIGHT_Pin GPIO_PIN_15
+#define CTRL_EIGHT_GPIO_Port GPIOA
 #define CTRL_THREE_Pin GPIO_PIN_3
 #define CTRL_THREE_GPIO_Port GPIOB
 #define CTRL_FOUR_Pin GPIO_PIN_4
@@ -89,7 +91,18 @@ void Error_Handler(void);
 #define CTRL_SEVEN_Pin GPIO_PIN_7
 #define CTRL_SEVEN_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-
+typedef struct{
+	volatile uint16_t Temperature_Eight_Value;  
+	volatile uint16_t Temperature_Seven_Value;  
+	volatile uint16_t Temperature_Six_Value;	
+	volatile uint16_t Temperature_Five_Value;    
+	volatile uint16_t Temperature_Four_Value;    
+	volatile uint16_t Temperature_Three_Value;
+	volatile uint16_t Temperature_Two_Value;    	
+	volatile uint16_t Temperature_One_Value;    
+}ADC_Value_t;
+extern ADC_Value_t adc_value;
+extern volatile uint16_t adc_t_value[8];
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

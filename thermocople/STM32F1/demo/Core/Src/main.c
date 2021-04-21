@@ -27,13 +27,15 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
-#include "can.h"
-
+#include "can_self.h"
+#include "timer.h"
+#include "temp_ctrl.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+ADC_Value_t adc_value;
+//volatile uint16_t adc_t_value[8];
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -78,7 +80,11 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+//	__HAL_AFIO_REMAP_SWJ_ENABLE();
+//	__HAL_AFIO_REMAP_SWJ_NONJTRST();
+	AFIO->MAPR |= 1 << 25;
+//	__HAL_AFIO_REMAP_SWJ_NOJTAG();
+//	__HAL_AFIO_REMAP_SWJ_DISABLE();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -94,19 +100,14 @@ int main(void)
   MX_USART1_UART_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
-  __HAL_AFIO_REMAP_SWJ_ENABLE();
-  volatile uint16_t ADC1_Value_DMA[8];
-  float Channel_[8];
-  HAL_ADC_Start_DMA(&hadc1,(uint32_t*)ADC1_Value_DMA,8);
-  HAL_GPIO_WritePin(GPIOB, CTRL_ONE_Pin|CTRL_TWO_Pin|CTRL_THREE_Pin, GPIO_PIN_SET);
- 	CAN1_Mode_Init(CAN_SJW_1TQ,CAN_BS2_8TQ,CAN_BS1_9TQ,4,CAN_MODE_LOOPBACK); //CAN初始化,波特率500Kbps      
-	CAN_Config();
-   	uint8_t key;
-	uint8_t i=0,t=0;
-	uint8_t cnt=0;
-	uint8_t canbuf[8];
-	uint8_t res;
-	uint8_t mode=1; 
+   Temperature_Construct();
+
+	HAL_ADC_Start_DMA(&hadc1,(uint32_t*)&adc_value,8);
+//  HAL_ADC_Start_DMA(&hadc1,(uint32_t*)adc_t_value,8);
+ 	CAN_Mode_Init(1,8,9,4,0);//CAN初始化,波特率500Kbps     //CAN工作模式;0,普通模式;1,环回模式
+    TIM3_Init(1000-1,7200-1);//所以定时器3的频率为72M/7200=10K，自动重装载为1000-1，那么定时器周期就是 100ms
+   CTRL_STA = FIRST_STA;
+   can_ctrl.ctrl_num = 0x00;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -116,61 +117,10 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-//	  printf("test\n");
-//      HAL_Delay(200);
-//	  for(i =0;i<8;i++)
-//	  {
-//		Channel_[i] = (float)(ADC1_Value_DMA[i]&0xFFF)*0.1151 - 124.3; // *3.3/4096*142.86-124.3 = *0.1151 - 124.3
-//		 if(i==3)
-//		printf("ADC1 Channel_[%d] Count: %5d,   voltage:  %5f \r\n",i+1,ADC1_Value_DMA[i],Channel_[i]);
 
-//      }
-
-			for(uint8_t i=0;i<8;i++)
-			{
-				canbuf[i]=cnt+i;//填充发送缓冲区
-//				if(i<4)printf("canbuf[%d]:%d\n",i,canbuf[i]);//LCD_ShowxNum(30+i*32,210,canbuf[i],3,16,0X80);	//显示数据
-//				else printf("canbuf[%d]:%d\n",i,canbuf[i]);//LCD_ShowxNum(30+(i-4)*32,230,canbuf[i],3,16,0X80);	//显示数据
- 			}
-			res=CAN1_Send_Msg(canbuf,8);//发送8个字节 
-			
-//			if(res)printf("Failed\n");//LCD_ShowString(30+80,190,200,16,16,"Failed");		//提示发送失败
-//			else printf("OK\n");//LCD_ShowString(30+80,190,200,16,16,"OK    ");	 		//提示发送成功								   
-//		else if(key==WKUP_PRES)//WK_UP按下，改变CAN的工作模式
-		{	   
-//			mode=!mode;
-            if(mode==0)  CAN1_Mode_Init(CAN_SJW_1TQ,CAN_BS2_8TQ,CAN_BS1_9TQ,4,CAN_MODE_NORMAL);        //回环模式,波特率500Kbps
-            else if(mode==1) CAN1_Mode_Init(CAN_SJW_1TQ,CAN_BS2_8TQ,CAN_BS1_9TQ,4,CAN_MODE_LOOPBACK);  //回环模式,波特率500Kbps
-			CAN_Config();
-			if(mode==0)//普通模式，需要2个开发板
-			{
-				printf("Nnormal Mode \n");				
-			}else //回环模式,一个开发板就可以测试了.
-			{
-				printf("LoopBack Mode\n");				
-			}
-		}		 
-		key=CAN1_Receive_Msg(canbuf);
-		if(key < 9)//接收到有数据
-		{			
- 			for(i=0;i<key;i++)
-			{									    
-				if(i<4)			printf("canbuf[%d]:%d\n",i,canbuf[i]);
-				else printf("canbuf[%d]:%d\n",i,canbuf[i]);
- 			}
-		}
-		t++; 
-		HAL_Delay(10);
-		if(t==20)
-		{
-			t=0;
-			cnt++;
-			printf("cnt:%d\n",cnt);
-		}		   
-	
-//      printf("ADC1 Channel_6 Count: %d,   voltage: %f \r\n",ADC1_Value_DMA[0],Channel_6);
-//      printf("ADC1 Channel_7 Count: %d,   voltage:  %f \r\n",ADC1_Value_DMA[1], Channel_7);
-//      printf("ADC1 Channel_8 Count: %d,   voltage:  %f \r\n",ADC1_Value_DMA[2], Channel_8);
+   Temperature_Process(CTRL_STA );
+	CAN_ProSend();
+	 CANScan();
 }
   /* USER CODE END 3 */
 }

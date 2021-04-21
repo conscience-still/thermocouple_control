@@ -46,10 +46,13 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-
+  __HAL_RCC_AFIO_CLK_ENABLE();
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, CTRL_ONE_Pin|CTRL_TWO_Pin|CTRL_THREE_Pin|CTRL_FOUR_Pin
                           |CTRL_FIVE_Pin|CTRL_SIX_Pin|CTRL_SEVEN_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(CTRL_EIGHT_GPIO_Port, CTRL_EIGHT_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PBPin PBPin PBPin PBPin
                            PBPin PBPin PBPin */
@@ -59,13 +62,15 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-  
-   GPIO_InitStruct.Pin = GPIO_PIN_8;
+
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = CTRL_EIGHT_Pin |GPIO_PIN_8;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct); 
-  HAL_GPIO_WritePin(GPIOB,GPIO_PIN_8, GPIO_PIN_RESET);
+  HAL_GPIO_Init(CTRL_EIGHT_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_WritePin(CTRL_EIGHT_GPIO_Port, GPIO_PIN_8, GPIO_PIN_RESET);
+
 }
 
 /* USER CODE BEGIN 2 */
